@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Daily Habits">
+<meta name="theme-color" content="#ffffff">
+<title>Daily Habits</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f8f9fa; --card: #ffffff; --card-border: #e8ecf0;
+    --accent: #e94560; --green: #2e7d32; --text: #1a1a1a; --text-dim: #777;
+    --blue: #1976d2; --orange: #ef6c00; --purple: #7b1fa2; --yellow: #f9a825;
+    --sec-exercise: #e3f2fd; --sec-exercise-text: #1565c0;
+    --sec-mindful: #f3e5f5; --sec-mindful-text: #7b1fa2;
+    --sec-dogs: #fff3e0; --sec-dogs-text: #e65100;
+    --sec-reading: #e8f5e9; --sec-reading-text: #2e7d32;
+    --sec-supplements: #eceff1; --sec-supplements-text: #546e7a;
+    --sec-drinks: #fce4ec; --sec-drinks-text: #c62828;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom) 12px;
+    padding-top: max(env(safe-area-inset-top), 16px); overflow-x: hidden;
+  }
+
+  /* Header */
+  .header { display:flex; align-items:center; justify-content:space-between; padding:8px 0 6px; position:sticky; top:0; z-index:10; background:var(--bg); }
+  .header h1 { font-size:20px; font-weight:700; color:#1a1a1a; }
+  .header-actions { display:flex; gap:8px; align-items:center; }
+  .icon-btn { background:#fff; border:1px solid var(--card-border); color:var(--text-dim); padding:6px 10px; border-radius:8px; font-size:12px; cursor:pointer; }
+  .icon-btn:active { background:#eee; }
+
+  /* Date nav */
+  .date-nav { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:14px; }
+  .date-nav button { background:#fff; border:1px solid var(--card-border); color:var(--text); width:36px; height:36px; border-radius:10px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .date-nav button:active { background:#eee; }
+  .date-display { text-align:center; }
+  .date-display .day-name { font-size:13px; color:var(--text-dim); font-weight:600; }
+  .date-display .day-date { font-size:22px; font-weight:700; color:#1a1a1a; }
+  .date-display .today-badge { display:inline-block; background:var(--accent); color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; margin-top:2px; }
+
+  /* Location */
+  .location-section { display:flex; gap:8px; margin-bottom:16px; justify-content:center; }
+  .loc-btn { flex:1; max-width:120px; padding:10px 8px; border-radius:12px; background:#fff; border:2px solid var(--card-border); color:var(--text-dim); text-align:center; cursor:pointer; font-size:13px; transition:all 0.2s; }
+  .loc-btn.active { border-color:var(--blue); color:var(--blue); background:rgba(25,118,210,0.06); }
+  .loc-btn .loc-icon { font-size:24px; display:block; margin-bottom:4px; }
+
+  /* Section */
+  .section { margin-bottom:16px; border-radius:16px; overflow:hidden; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px 8px; }
+  .section-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+  .section-toggle { background:rgba(255,255,255,0.6); border:1px solid rgba(0,0,0,0.1); font-size:11px; padding:3px 8px; border-radius:6px; cursor:pointer; }
+  .section-toggle:active { background:rgba(0,0,0,0.05); }
+  #sec-exercise .section-header { background:var(--sec-exercise); }
+  #sec-exercise .section-title { color:var(--sec-exercise-text); }
+  #sec-exercise .section-toggle { color:var(--sec-exercise-text); }
+  #sec-mindful .section-header { background:var(--sec-mindful); }
+  #sec-mindful .section-title { color:var(--sec-mindful-text); }
+  #sec-mindful .section-toggle { color:var(--sec-mindful-text); }
+  #sec-dogs .section-header { background:var(--sec-dogs); }
+  #sec-dogs .section-title { color:var(--sec-dogs-text); }
+  #sec-dogs .section-toggle { color:var(--sec-dogs-text); }
+  #sec-reading .section-header { background:var(--sec-reading); }
+  #sec-reading .section-title { color:var(--sec-reading-text); }
+  #sec-reading .section-toggle { color:var(--sec-reading-text); }
+  #sec-supplements .section-header { background:var(--sec-supplements); }
+  #sec-supplements .section-title { color:var(--sec-supplements-text); }
+  #sec-supplements .section-toggle { color:var(--sec-supplements-text); }
+  #sec-drinks .section-header { background:var(--sec-drinks); }
+  #sec-drinks .section-title { color:var(--sec-drinks-text); }
+  #sec-drinks .section-toggle { color:var(--sec-drinks-text); }
+
+  /* Card */
+  .card { background:#fff; border-radius:0; padding:14px; border-bottom:1px solid var(--card-border); }
+  .card:last-child { border-bottom:none; }
+  .card-row { display:flex; align-items:center; justify-content:space-between; }
+  .card-label { display:flex; align-items:center; gap:8px; }
+  .card-label .icon { font-size:20px; }
+  .card-label .name { font-size:15px; font-weight:500; color:#1a1a1a; }
+  .card-label .goal-text { font-size:11px; color:var(--text-dim); }
+
+  /* Goal progress ring */
+  .goal-wrap { display:flex; align-items:center; gap:10px; }
+  .goal-ring { position:relative; width:38px; height:38px; }
+  .goal-ring svg { transform:rotate(-90deg); }
+  .goal-ring .ring-bg { fill:none; stroke:#e8ecf0; stroke-width:3; }
+  .goal-ring .ring-fg { fill:none; stroke-width:3; stroke-linecap:round; transition:stroke-dashoffset 0.4s, stroke 0.3s; }
+  .goal-ring .ring-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:var(--text-dim); }
+  .goal-ring .ring-text.met { color:var(--green); }
+
+  /* Num controls */
+  .num-controls { display:flex; gap:6px; align-items:center; }
+  .num-btn { background:#f0f3f6; border:1px solid var(--card-border); color:#1a1a1a; width:40px; height:36px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .num-btn:active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .num-display { min-width:48px; text-align:center; font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; cursor:pointer; background:#f0f3f6; border:1px solid var(--card-border); border-radius:10px; padding:6px 4px; line-height:24px; color:#1a1a1a; }
+  .num-display:active { background:#e0e4e8; }
+  .num-edit-input { background:#fff; border:2px solid var(--accent); color:#1a1a1a; width:56px; height:36px; border-radius:10px; text-align:center; font-size:16px; font-weight:600; font-family:inherit; }
+  .num-edit-input:focus { outline:none; }
+
+  /* Toggle */
+  .toggle-track { width:52px; height:30px; border-radius:15px; padding:3px; background:#ccc; cursor:pointer; transition:background 0.3s; flex-shrink:0; }
+  .toggle-track.on { background:var(--green); }
+  .toggle-knob { width:24px; height:24px; border-radius:12px; background:white; transition:transform 0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.15); }
+  .toggle-track.on .toggle-knob { transform:translateX(22px); }
+
+  /* Decimal input */
+  .decimal-input { background:#f0f3f6; border:1px solid var(--card-border); color:#1a1a1a; width:60px; height:36px; border-radius:10px; text-align:center; font-size:16px; font-weight:600; font-family:inherit; }
+  .decimal-input:focus { outline:2px solid var(--accent); border-color:transparent; }
+
+  /* Month dot grid */
+  .month-dots { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:10px; padding:0 2px; }
+  .month-dots .dot-label { font-size:9px; color:var(--text-dim); text-align:center; font-weight:600; margin-bottom:2px; }
+  .m-dot { width:100%; aspect-ratio:1; border-radius:50%; background:#e8ecf0; max-width:14px; margin:0 auto; transition:background 0.2s; }
+  .m-dot.done { background:var(--green); }
+  .m-dot.done.loc-work { background:#0097a7; }
+  .m-dot.done.loc-vacation { background:#9e9d24; }
+  .m-dot.missed { background:#e0e0e0; }
+  .m-dot.missed.loc-work { background:transparent; border:2px solid rgba(25,118,210,0.3); }
+  .m-dot.missed.loc-vacation { background:transparent; border:2px solid rgba(239,108,0,0.3); }
+  .m-dot.today { box-shadow:0 0 0 2px var(--accent); }
+  .m-dot.future { background:transparent; border:1px solid #ddd; }
+  .m-dot.empty { background:transparent; border:none; }
+
+  /* Month chart legend */
+  .chart-legend { display:flex; gap:12px; margin-top:6px; justify-content:center; flex-wrap:wrap; }
+  .chart-legend-item { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text-dim); }
+  .chart-legend-dot { width:8px; height:8px; border-radius:50%; }
+
+  /* Month line chart */
+  .month-chart-wrap { margin-top:10px; height:80px; }
+  .month-chart-wrap canvas { width:100%!important; height:80px!important; }
+
+  /* Drinks */
+  .drinks-display { display:flex; gap:3px; align-items:center; margin-top:8px; flex-wrap:wrap; }
+  .drink-icon { font-size:18px; opacity:0.2; transition:opacity 0.3s; }
+  .drink-icon.active { opacity:1; }
+
+  /* Summary panel */
+  .summary-panel { display:none; }
+  .summary-panel.open { display:block; }
+
+  /* Footer */
+  .footer { text-align:center; padding:20px 0 40px; color:var(--text-dim); font-size:11px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Daily Habits</h1>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="goToToday()">Today</button>
+    <button class="icon-btn" onclick="exportCSV()">Export</button>
+  </div>
+</div>
+
+<!-- Date navigation -->
+<div class="date-nav">
+  <button onclick="changeDay(-1)">‹</button>
+  <div class="date-display">
+    <div class="day-name" id="dayName"></div>
+    <div class="day-date" id="dayDate"></div>
+    <div id="todayBadge"></div>
+  </div>
+  <button onclick="changeDay(1)">›</button>
+</div>
+
+<!-- Location -->
+<div class="location-section">
+  <div class="loc-btn" data-loc="home" onclick="setLocation('home')"><span class="loc-icon">🏠</span>Home</div>
+  <div class="loc-btn" data-loc="work" onclick="setLocation('work')"><span class="loc-icon">✈️</span>Work Travel</div>
+  <div class="loc-btn" data-loc="vacation" onclick="setLocation('vacation')"><span class="loc-icon">🏖️</span>Vacation</div>
+</div>
+
+<!-- Exercise -->
+<div class="section" id="sec-exercise">
+  <div class="section-header">
+    <div class="section-title">Exercise</div>
+    <button class="section-toggle" onclick="toggleSection('exercise')">Monthly</button>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">💪</span><div><span class="name">Push-ups</span><div class="goal-text">Goal: 50</div></div></div>
+      <div class="goal-wrap">
+        <div class="goal-ring" id="ring-pushups"></div>
+        <div class="num-controls">
+          <div class="num-display" id="pushups-display" onclick="editNum('pushups')">0</div>
+          <button class="num-btn" onclick="addNum('pushups',10)">+10</button>
+          <button class="num-btn" onclick="addNum('pushups',25)">+25</button>
+        </div>
+      </div>
+    </div>
+    <div class="summary-panel" id="summary-pushups"><div class="month-chart-wrap"><canvas id="chart-pushups"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🏋️</span><div><span class="name">Pull-ups</span><div class="goal-text">Goal: 10</div></div></div>
+      <div class="goal-wrap">
+        <div class="goal-ring" id="ring-pullups"></div>
+        <div class="num-controls">
+          <div class="num-display" id="pullups-display" onclick="editNum('pullups')">0</div>
+          <button class="num-btn" onclick="addNum('pullups',5)">+5</button>
+          <button class="num-btn" onclick="addNum('pullups',10)">+10</button>
+        </div>
+      </div>
+    </div>
+    <div class="summary-panel" id="summary-pullups"><div class="month-chart-wrap"><canvas id="chart-pullups"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🦵</span><div><span class="name">Squats</span><div class="goal-text">Goal: 50</div></div></div>
+      <div class="goal-wrap">
+        <div class="goal-ring" id="ring-squats"></div>
+        <div class="num-controls">
+          <div class="num-display" id="squats-display" onclick="editNum('squats')">0</div>
+          <button class="num-btn" onclick="addNum('squats',10)">+10</button>
+          <button class="num-btn" onclick="addNum('squats',25)">+25</button>
+        </div>
+      </div>
+    </div>
+    <div class="summary-panel" id="summary-squats"><div class="month-chart-wrap"><canvas id="chart-squats"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🚴</span><span class="name">Peloton Core</span></div>
+      <div class="toggle-track" id="toggle-peloton" onclick="toggleBinary('peloton')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="summary-panel" id="summary-peloton"><div class="month-dots" id="dots-peloton"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🏃</span><div><span class="name">Miles</span><div class="goal-text">Goal: 3.0</div></div></div>
+      <div class="goal-wrap">
+        <div class="goal-ring" id="ring-miles"></div>
+        <div class="num-controls">
+          <input type="number" class="decimal-input" id="miles-input" step="0.1" min="0" placeholder="0.0" onchange="setDecimal('miles',this.value)" onfocus="this.select()">
+        </div>
+      </div>
+    </div>
+    <div class="summary-panel" id="summary-miles"><div class="month-chart-wrap"><canvas id="chart-miles"></canvas></div></div>
+  </div>
+</div>
+
+<!-- Mindful -->
+<div class="section" id="sec-mindful">
+  <div class="section-header">
+    <div class="section-title">Mindfulness</div>
+    <button class="section-toggle" onclick="toggleSection('mindful')">Monthly</button>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🧘</span><div><span class="name">Meditation</span><div class="goal-text">Goal: 10 min</div></div></div>
+      <div class="goal-wrap">
+        <div class="goal-ring" id="ring-meditation"></div>
+        <div class="num-controls">
+          <div class="num-display" id="meditation-display" onclick="editNum('meditation')">0</div>
+          <button class="num-btn" onclick="addNum('meditation',5)">+5</button>
+          <button class="num-btn" onclick="addNum('meditation',10)">+10</button>
+        </div>
+      </div>
+    </div>
+    <div class="summary-panel" id="summary-meditation"><div class="month-chart-wrap"><canvas id="chart-meditation"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🤸</span><span class="name">Stretching</span></div>
+      <div class="toggle-track" id="toggle-stretching" onclick="toggleBinary('stretching')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="summary-panel" id="summary-stretching"><div class="month-dots" id="dots-stretching"></div></div>
+  </div>
+</div>
+
+<!-- Dogs -->
+<div class="section" id="sec-dogs">
+  <div class="section-header">
+    <div class="section-title">Dogs</div>
+    <button class="section-toggle" onclick="toggleSection('dogs')">Monthly</button>
+  </div>
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🐕</span><span class="name">Walked the Dogs</span></div>
+      <div class="toggle-track" id="toggle-dogs" onclick="toggleBinary('dogs')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="summary-panel" id="summary-dogs"><div class="month-dots" id="dots-dogs"></div></div>
+  </div>
+</div>
+
+<!-- Reading -->
+<div class="section" id="sec-reading">
+  <div class="section-header">
+    <div class="section-title">Reading</div>
+    <button class="section-toggle" onclick="toggleSection('reading')">Monthly</button>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">📖</span><div><span class="name">Fiction</span><div class="goal-text">Goal: 20 min</div></div></div>
+      <div class="goal-wrap">
+        <div class="goal-ring" id="ring-fiction"></div>
+        <div class="num-controls">
+          <div class="num-display" id="fiction-display" onclick="editNum('fiction')">0</div>
+          <button class="num-btn" onclick="addNum('fiction',10)">+10</button>
+          <button class="num-btn" onclick="addNum('fiction',30)">+30</button>
+        </div>
+      </div>
+    </div>
+    <div class="summary-panel" id="summary-fiction"><div class="month-chart-wrap"><canvas id="chart-fiction"></canvas></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">📚</span><div><span class="name">Non-Fiction</span><div class="goal-text">Goal: 20 min</div></div></div>
+      <div class="goal-wrap">
+        <div class="goal-ring" id="ring-nonfiction"></div>
+        <div class="num-controls">
+          <div class="num-display" id="nonfiction-display" onclick="editNum('nonfiction')">0</div>
+          <button class="num-btn" onclick="addNum('nonfiction',10)">+10</button>
+          <button class="num-btn" onclick="addNum('nonfiction',30)">+30</button>
+        </div>
+      </div>
+    </div>
+    <div class="summary-panel" id="summary-nonfiction"><div class="month-chart-wrap"><canvas id="chart-nonfiction"></canvas></div></div>
+  </div>
+</div>
+
+<!-- Supplements -->
+<div class="section" id="sec-supplements">
+  <div class="section-header">
+    <div class="section-title">Supplements</div>
+    <button class="section-toggle" onclick="toggleSection('supplements')">Monthly</button>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">💊</span><span class="name">Multivitamin</span></div>
+      <div class="toggle-track" id="toggle-multi" onclick="toggleBinary('multi')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="summary-panel" id="summary-multi"><div class="month-dots" id="dots-multi"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🥬</span><span class="name">AG1</span></div>
+      <div class="toggle-track" id="toggle-ag1" onclick="toggleBinary('ag1')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="summary-panel" id="summary-ag1"><div class="month-dots" id="dots-ag1"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🦠</span><span class="name">Probiotic</span></div>
+      <div class="toggle-track" id="toggle-probiotic" onclick="toggleBinary('probiotic')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="summary-panel" id="summary-probiotic"><div class="month-dots" id="dots-probiotic"></div></div>
+  </div>
+</div>
+
+<!-- Drinks -->
+<div class="section" id="sec-drinks">
+  <div class="section-header">
+    <div class="section-title">Drinks</div>
+    <button class="section-toggle" onclick="toggleSection('drinks')">Monthly</button>
+  </div>
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">🍺</span><span class="name">Drinks</span></div>
+      <div class="num-controls">
+        <div class="num-display" id="drinks-display" onclick="editNum('drinks')">0</div>
+        <button class="num-btn" onclick="addNum('drinks',1)">+1</button>
+        <button class="num-btn" onclick="addNum('drinks',2)">+2</button>
+      </div>
+    </div>
+    <div class="drinks-display" id="drinks-icons"></div>
+    <div class="summary-panel" id="summary-drinks"><div class="month-chart-wrap"><canvas id="chart-drinks"></canvas></div></div>
+  </div>
+</div>
+
+<div class="footer">Tap Share then "Add to Home Screen" in Safari</div>
+
+<script>
+// ── Config ──
+const NUMS = ['pushups','pullups','squats','miles','fiction','nonfiction','drinks','meditation'];
+const BINS = ['peloton','dogs','multi','ag1','probiotic','stretching'];
+const GOALS = {
+  pushups: 50, pullups: 10, squats: 50, miles: 3, fiction: 20, nonfiction: 20, meditation: 10
+};
+const CHART_COLORS = {
+  pushups:'#e94560', pullups:'#4fc3f7', squats:'#ffb74d', miles:'#00c853',
+  fiction:'#ce93d8', nonfiction:'#fff176', drinks:'#ff8a65', meditation:'#80cbc4'
+};
+
+let dayOffset = 0;
+let charts = {};
+let openSections = {};
+
+// ── Date helpers ──
+function getSelectedDate() {
+  const d = new Date(); d.setDate(d.getDate() + dayOffset); d.setHours(0,0,0,0); return d;
+}
+function dateKey(d) { return d.toISOString().split('T')[0]; }
+function isToday(d) { const t=new Date(); return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate(); }
+
+function getMonthDates(refDate) {
+  const year = refDate.getFullYear(), month = refDate.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+  const dates = [];
+  // Pad start to Monday
+  let startDay = first.getDay(); if (startDay===0) startDay=7;
+  for (let i=1; i<startDay; i++) dates.push(null);
+  for (let d=1; d<=last.getDate(); d++) dates.push(new Date(year, month, d));
+  return dates;
+}
+
+// ── Storage ──
+function loadData() { try { return JSON.parse(localStorage.getItem('habitData')||'{}'); } catch { return {}; } }
+function saveData(data) { localStorage.setItem('habitData', JSON.stringify(data)); }
+function getDayData(ds) { return loadData()[ds]||{}; }
+function setDayValue(ds, key, val) { const d=loadData(); if(!d[ds]) d[ds]={}; d[ds][key]=val; saveData(d); }
+
+// ── Goal ring SVG ──
+function renderGoalRing(id, current, goal, color) {
+  const el = document.getElementById(id); if (!el) return;
+  const pct = Math.min(current/goal, 1);
+  const r=15, circ=2*Math.PI*r;
+  const met = current >= goal;
+  const strokeColor = met ? 'var(--green)' : color;
+  el.innerHTML = `
+    <svg width="38" height="38" viewBox="0 0 38 38">
+      <circle cx="19" cy="19" r="${r}" class="ring-bg"/>
+      <circle cx="19" cy="19" r="${r}" class="ring-fg" stroke="${strokeColor}"
+        stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-pct)}"/>
+    </svg>
+    <div class="ring-text ${met?'met':''}">${current}</div>`;
+}
+
+// ── Render date nav ──
+function renderDateNav() {
+  const d = getSelectedDate();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('dayName').textContent = days[d.getDay()];
+  document.getElementById('dayDate').textContent = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  document.getElementById('todayBadge').innerHTML = isToday(d) ? '<span class="today-badge">TODAY</span>' : '';
+}
+
+function renderLocation() {
+  const dk = dateKey(getSelectedDate());
+  const loc = getDayData(dk).location || 'home';
+  document.querySelectorAll('.loc-btn').forEach(b => b.classList.toggle('active', b.dataset.loc===loc));
+}
+
+function renderNumbers() {
+  const dk = dateKey(getSelectedDate());
+  const dd = getDayData(dk);
+  NUMS.forEach(key => {
+    const val = dd[key]||0;
+    const disp = document.getElementById(key+'-display');
+    if (disp) disp.textContent = key==='miles' ? parseFloat(val).toFixed(1) : val;
+    const inp = document.getElementById(key+'-input');
+    if (inp) inp.value = val||'';
+    // Goal ring
+    if (GOALS[key]) renderGoalRing('ring-'+key, parseFloat(val), GOALS[key], CHART_COLORS[key]||'#4fc3f7');
+  });
+  // Drinks icons
+  const dc = dd.drinks||0;
+  const container = document.getElementById('drinks-icons');
+  if (container) {
+    let h=''; for(let i=0;i<Math.max(8,dc);i++) h+=`<span class="drink-icon ${i<dc?'active':''}">🍺</span>`;
+    container.innerHTML=h;
+  }
+}
+
+function renderBinaries() {
+  const dk = dateKey(getSelectedDate());
+  const dd = getDayData(dk);
+  BINS.forEach(key => {
+    const track = document.getElementById('toggle-'+key);
+    if (track) track.classList.toggle('on', !!dd[key]);
+  });
+}
+
+function renderMonthDots() {
+  const sel = getSelectedDate();
+  const monthDates = getMonthDates(sel);
+  const data = loadData();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dows = ['M','T','W','T','F','S','S'];
+
+  BINS.forEach(key => {
+    const dotsEl = document.getElementById('dots-'+key);
+    if (!dotsEl) return;
+    let html = dows.map(d => `<div class="dot-label">${d}</div>`).join('');
+    monthDates.forEach(d => {
+      if (!d) { html += '<div class="m-dot empty"></div>'; return; }
+      const dk2 = dateKey(d);
+      const dd = data[dk2]||{};
+      const isFuture = d > today;
+      const isTod = isToday(d);
+      const done = !!dd[key];
+      const loc = dd.location || 'home';
+      const locCls = loc !== 'home' ? ' loc-' + loc : '';
+      let cls = 'm-dot';
+      if (isFuture) cls += ' future';
+      else if (done) cls += ' done' + locCls;
+      else cls += ' missed' + locCls;
+      if (isTod) cls += ' today';
+      html += `<div class="${cls}"></div>`;
+    });
+    // Add legend
+    html += '<div style="grid-column:1/-1"><div class="chart-legend">';
+    html += '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--green)"></div>Home</div>';
+    html += '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:#0097a7"></div>Travel</div>';
+    html += '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:#9e9d24"></div>Vacation</div>';
+    html += '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:#e0e0e0"></div>Missed</div>';
+    html += '</div></div>';
+    dotsEl.innerHTML = html;
+  });
+}
+
+const LOC_COLORS = { home: null, work: '#1976d2', vacation: '#ef6c00' };
+const LOC_BG = { home: null, work: 'rgba(25,118,210,0.06)', vacation: 'rgba(239,108,0,0.06)' };
+
+function renderMonthCharts() {
+  const sel = getSelectedDate();
+  const year = sel.getFullYear(), month = sel.getMonth();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const data = loadData();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const chartKeys = NUMS;
+  chartKeys.forEach(key => {
+    const canvas = document.getElementById('chart-'+key);
+    if (!canvas) return;
+
+    const labels=[]; const values=[]; const locs=[]; const pointColors=[]; const pointBorders=[];
+    const baseColor = CHART_COLORS[key]||'#4fc3f7';
+
+    for (let d=1; d<=daysInMonth; d++) {
+      const dt = new Date(year, month, d);
+      if (dt > today) break;
+      labels.push(d);
+      const dd = data[dateKey(dt)]||{};
+      values.push(parseFloat(dd[key]||0));
+      const loc = dd.location || 'home';
+      locs.push(loc);
+      if (loc === 'work') { pointColors.push('#1976d2'); pointBorders.push('#1976d2'); }
+      else if (loc === 'vacation') { pointColors.push('#ef6c00'); pointBorders.push('#ef6c00'); }
+      else { pointColors.push(baseColor); pointBorders.push(baseColor); }
+    }
+
+    if (charts[key]) charts[key].destroy();
+    const goalLine = GOALS[key] ? Array(labels.length).fill(GOALS[key]) : null;
+
+    // Build background color bands for travel/vacation
+    const bgPlugin = {
+      id: 'locBands',
+      beforeDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea) return;
+        const xScale = scales.x;
+        locs.forEach((loc, i) => {
+          if (loc === 'home') return;
+          const bg = LOC_BG[loc];
+          if (!bg) return;
+          const x0 = i === 0 ? chartArea.left : (xScale.getPixelForValue(i-1) + xScale.getPixelForValue(i)) / 2;
+          const x1 = i === locs.length-1 ? chartArea.right : (xScale.getPixelForValue(i) + xScale.getPixelForValue(i+1)) / 2;
+          ctx.save();
+          ctx.fillStyle = bg;
+          ctx.fillRect(x0, chartArea.top, x1 - x0, chartArea.bottom - chartArea.top);
+          ctx.restore();
+        });
+      }
+    };
+
+    const datasets = [{
+      data: values,
+      borderColor: baseColor,
+      backgroundColor: baseColor + '15',
+      fill: true, tension: 0.3,
+      pointRadius: 4, pointBorderWidth: 2,
+      pointBackgroundColor: pointColors,
+      pointBorderColor: pointBorders,
+      borderWidth: 2,
+    }];
+    if (goalLine) {
+      datasets.push({
+        data: goalLine, borderColor: 'rgba(0,0,0,0.15)',
+        borderDash: [4,4], borderWidth: 1, pointRadius: 0, fill: false,
+      });
+    }
+
+    charts[key] = new Chart(canvas.getContext('2d'), {
+      type:'line',
+      data: { labels, datasets },
+      plugins: [bgPlugin],
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+        scales:{
+          x:{ display:true, grid:{display:false}, ticks:{color:'#999',font:{size:9},maxTicksLimit:10} },
+          y:{ display:false, beginAtZero:true }
+        },
+        animation:{duration:300}
+      }
+    });
+  });
+}
+
+function renderAll() {
+  renderDateNav(); renderLocation(); renderNumbers(); renderBinaries();
+  renderMonthDots(); renderMonthCharts();
+}
+
+// ── Actions ──
+function setLocation(loc) { setDayValue(dateKey(getSelectedDate()),'location',loc); renderLocation(); }
+
+function addNum(key, amt) {
+  const dk=dateKey(getSelectedDate()); const dd=getDayData(dk);
+  let v=parseFloat(dd[key]||0)+amt; if(v<0)v=0;
+  if(key==='miles') v=Math.round(v*10)/10;
+  setDayValue(dk,key,v); renderNumbers(); renderMonthCharts();
+}
+
+function editNum(key) {
+  const disp = document.getElementById(key+'-display');
+  if (!disp || disp.querySelector('input')) return;
+  const currentVal = disp.textContent;
+  const isDecimal = key === 'miles';
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'num-edit-input';
+  input.value = currentVal;
+  if (isDecimal) input.step = '0.1';
+  input.min = '0';
+  disp.textContent = '';
+  disp.style.padding = '0';
+  disp.appendChild(input);
+  input.focus();
+  input.select();
+
+  function commit() {
+    const dk = dateKey(getSelectedDate());
+    let v = parseFloat(input.value) || 0;
+    if (v < 0) v = 0;
+    if (isDecimal) v = Math.round(v * 10) / 10;
+    else v = Math.round(v);
+    setDayValue(dk, key, v);
+    disp.style.padding = '';
+    renderNumbers();
+    renderMonthCharts();
+  }
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { input.blur(); } });
+}
+
+function setDecimal(key, val) {
+  const v=Math.max(0,parseFloat(val)||0);
+  setDayValue(dateKey(getSelectedDate()),key,Math.round(v*10)/10);
+  renderNumbers(); renderMonthCharts();
+}
+
+function toggleBinary(key) {
+  const dk=dateKey(getSelectedDate()); const dd=getDayData(dk);
+  setDayValue(dk,key,!dd[key]); renderBinaries(); renderMonthDots();
+}
+
+function changeDay(dir) { dayOffset+=dir; renderAll(); }
+function goToToday() { dayOffset=0; renderAll(); }
+
+function toggleSection(name) {
+  openSections[name] = !openSections[name];
+  const sec = document.getElementById('sec-'+name);
+  if (!sec) return;
+  const panels = sec.querySelectorAll('.summary-panel');
+  const btn = sec.querySelector('.section-toggle');
+  panels.forEach(p => p.classList.toggle('open', openSections[name]));
+  if (btn) btn.textContent = openSections[name] ? 'Hide' : 'Monthly';
+  if (openSections[name]) { renderMonthDots(); renderMonthCharts(); }
+}
+
+// ── Export ──
+function exportCSV() {
+  const data=loadData(); const allDates=Object.keys(data).sort();
+  if(!allDates.length){alert('No data to export yet!');return;}
+  const h=['Date','Location','Push-ups','Pull-ups','Squats','Peloton Core','Miles','Dogs','Fiction (min)','Non-Fiction (min)','Multivitamin','AG1','Probiotic','Drinks','Meditation (min)','Stretching'];
+  const rows=[h.join(',')];
+  allDates.forEach(dk => {
+    const d=data[dk];
+    rows.push([dk, d.location||'home', d.pushups||0, d.pullups||0, d.squats||0,
+      d.peloton?'Yes':'No', d.miles||0, d.dogs?'Yes':'No', d.fiction||0, d.nonfiction||0,
+      d.multi?'Yes':'No', d.ag1?'Yes':'No', d.probiotic?'Yes':'No', d.drinks||0,
+      d.meditation||0, d.stretching?'Yes':'No'].join(','));
+  });
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=`habits-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ── Swipe support ──
+let touchStartX=0;
+document.addEventListener('touchstart', e => { touchStartX=e.touches[0].clientX; }, {passive:true});
+document.addEventListener('touchend', e => {
+  const diff=e.changedTouches[0].clientX-touchStartX;
+  if(Math.abs(diff)>80) { changeDay(diff>0?-1:1); }
+}, {passive:true});
+
+// ── Init ──
+renderAll();
+</script>
+</body>
+</html>
