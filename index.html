@@ -124,11 +124,13 @@
   .decimal-input { background:#f0f3f6; border:1px solid var(--card-border); color:#1a1a1a; width:60px; height:36px; border-radius:10px; text-align:center; font-size:16px; font-weight:600; font-family:inherit; }
   .decimal-input:focus { outline:2px solid var(--accent); border-color:transparent; }
 
-  /* Sleep sub-row */
+  /* Sleep hr:min inputs */
+  .sleep-hm-row { display:flex; align-items:center; gap:4px; }
+  .sleep-hm-input { background:#f0f3f6; border:1px solid var(--card-border); color:#1a1a1a; width:44px; height:36px; border-radius:10px; text-align:center; font-size:16px; font-weight:600; font-family:inherit; }
+  .sleep-hm-input:focus { outline:2px solid var(--accent); border-color:transparent; }
+  .sleep-hm-sep { font-size:13px; color:var(--text-dim); font-weight:600; }
   .sleep-sub-row { display:flex; align-items:center; gap:8px; margin-top:8px; padding-left:28px; }
   .sleep-sub-label { font-size:13px; color:var(--text-dim); }
-  .sleep-sub-input { background:#f0f3f6; border:1px solid var(--card-border); color:#1a1a1a; width:60px; height:32px; border-radius:8px; text-align:center; font-size:14px; font-weight:600; font-family:inherit; }
-  .sleep-sub-input:focus { outline:2px solid var(--accent); border-color:transparent; }
 
   /* Month dot grid */
   .month-dots { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:10px; padding:0 2px; }
@@ -281,18 +283,23 @@
   </div>
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">&#128564;</span><div><span class="name">Hours Slept</span><div class="goal-text" id="goal-text-sleep" onclick="editGoal('sleep')">Goal: 7.0 hrs</div></div></div>
+      <div class="card-label"><span class="icon">&#128564;</span><div><span class="name">Sleep</span><div class="goal-text" id="goal-text-sleep" onclick="editGoal('sleep')">Goal: 7.0 hrs</div></div></div>
       <div class="goal-wrap">
         <div class="goal-ring" id="ring-sleep"></div>
-        <div class="num-controls">
-          <input type="number" class="decimal-input" id="sleep-input" step="0.1" min="0" placeholder="0.0" onchange="setDecimal('sleep',this.value)" onfocus="this.select()">
+        <div class="sleep-hm-row">
+          <input type="number" class="sleep-hm-input" id="sleep-hrs" min="0" max="24" placeholder="0" onchange="setSleepHM('sleep')" onfocus="this.select()">
+          <span class="sleep-hm-sep">hr</span>
+          <input type="number" class="sleep-hm-input" id="sleep-min" min="0" max="59" placeholder="0" onchange="setSleepHM('sleep')" onfocus="this.select()">
+          <span class="sleep-hm-sep">min</span>
         </div>
       </div>
     </div>
     <div class="sleep-sub-row">
       <span class="sleep-sub-label">Deep sleep:</span>
-      <input type="number" class="sleep-sub-input" id="deepsleep-input" step="0.1" min="0" placeholder="0.0" onchange="setDecimal('deepsleep',this.value)" onfocus="this.select()">
-      <span class="sleep-sub-label">hrs</span>
+      <input type="number" class="sleep-hm-input" id="deepsleep-hrs" min="0" max="24" placeholder="0" onchange="setSleepHM('deepsleep')" onfocus="this.select()">
+      <span class="sleep-hm-sep">hr</span>
+      <input type="number" class="sleep-hm-input" id="deepsleep-min" min="0" max="59" placeholder="0" onchange="setSleepHM('deepsleep')" onfocus="this.select()">
+      <span class="sleep-hm-sep">min</span>
     </div>
     <div class="summary-panel" id="summary-sleep"><div class="month-chart-wrap"><canvas id="chart-sleep"></canvas></div></div>
   </div>
@@ -506,19 +513,27 @@ function getDayData(ds) { return loadData()[ds]||{}; }
 function setDayValue(ds, key, val) { const d=loadData(); if(!d[ds]) d[ds]={}; d[ds][key]=val; saveData(d); }
 
 // ── Goal ring SVG ──
+function fmtSleepRing(val) {
+  const h = Math.floor(val); const m = Math.round((val % 1) * 60);
+  return m > 0 ? h + ':' + String(m).padStart(2,'0') : h + 'h';
+}
+
 function renderGoalRing(id, current, goal, color) {
   const el = document.getElementById(id); if (!el) return;
   const pct = Math.min(current/goal, 1);
   const r=15, circ=2*Math.PI*r;
   const met = current >= goal;
   const strokeColor = met ? 'var(--green)' : color;
+  const isSleep = id === 'ring-sleep';
+  const label = isSleep ? fmtSleepRing(current) : current;
+  const fontSize = isSleep ? '9px' : '10px';
   el.innerHTML = `
     <svg width="38" height="38" viewBox="0 0 38 38">
       <circle cx="19" cy="19" r="${r}" class="ring-bg"/>
       <circle cx="19" cy="19" r="${r}" class="ring-fg" stroke="${strokeColor}"
         stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-pct)}"/>
     </svg>
-    <div class="ring-text ${met?'met':''}">${current}</div>`;
+    <div class="ring-text ${met?'met':''}" style="font-size:${fontSize}">${label}</div>`;
 }
 
 // ── Render goal text labels ──
@@ -528,8 +543,13 @@ function renderGoalTexts() {
     if (!el) return;
     const g = getGoal(key);
     const unit = GOAL_UNITS[key] || '';
-    const isDecimal = (key === 'miles' || key === 'sleep');
-    el.textContent = 'Goal: ' + (isDecimal ? parseFloat(g).toFixed(1) : g) + unit;
+    if (key === 'sleep') {
+      const h = Math.floor(g); const m = Math.round((g % 1) * 60);
+      el.textContent = 'Goal: ' + h + 'h' + (m > 0 ? ' ' + m + 'm' : '');
+    } else {
+      const isDecimal = (key === 'miles');
+      el.textContent = 'Goal: ' + (isDecimal ? parseFloat(g).toFixed(1) : g) + unit;
+    }
   });
 }
 
@@ -591,10 +611,20 @@ function renderNumbers() {
   NUMS.forEach(key => {
     const val = dd[key]||0;
     const disp = document.getElementById(key+'-display');
-    const isDecimal = (key==='miles'||key==='sleep'||key==='deepsleep');
+    const isDecimal = (key==='miles');
     if (disp) disp.textContent = isDecimal ? parseFloat(val).toFixed(1) : val;
     const inp = document.getElementById(key+'-input');
     if (inp) inp.value = val||'';
+    // Sleep hr:min fields
+    if (key === 'sleep' || key === 'deepsleep') {
+      const hrsEl = document.getElementById(key+'-hrs');
+      const minEl = document.getElementById(key+'-min');
+      if (hrsEl && minEl) {
+        const decVal = parseFloat(val) || 0;
+        hrsEl.value = Math.floor(decVal) || '';
+        minEl.value = Math.round((decVal % 1) * 60) || '';
+      }
+    }
     // Goal ring
     const goal = getGoal(key);
     if (goal) renderGoalRing('ring-'+key, parseFloat(val), goal, CHART_COLORS[key]||'#4fc3f7');
@@ -790,7 +820,7 @@ function setLocation(loc) { setDayValue(dateKey(getSelectedDate()),'location',lo
 function addNum(key, amt) {
   const dk=dateKey(getSelectedDate()); const dd=getDayData(dk);
   let v=parseFloat(dd[key]||0)+amt; if(v<0)v=0;
-  const isDecimal = (key==='miles'||key==='sleep'||key==='deepsleep');
+  const isDecimal = (key==='miles');
   if(isDecimal) v=Math.round(v*10)/10;
   setDayValue(dk,key,v); renderNumbers(); renderMonthCharts();
 }
@@ -799,7 +829,7 @@ function editNum(key) {
   const disp = document.getElementById(key+'-display');
   if (!disp || disp.querySelector('input')) return;
   const currentVal = disp.textContent;
-  const isDecimal = (key==='miles'||key==='sleep'||key==='deepsleep');
+  const isDecimal = (key==='miles');
   const input = document.createElement('input');
   input.type = 'number';
   input.className = 'num-edit-input';
@@ -830,6 +860,18 @@ function editNum(key) {
 function setDecimal(key, val) {
   const v=Math.max(0,parseFloat(val)||0);
   setDayValue(dateKey(getSelectedDate()),key,Math.round(v*10)/10);
+  renderNumbers(); renderMonthCharts();
+}
+
+function setSleepHM(key) {
+  const hrsEl = document.getElementById(key+'-hrs');
+  const minEl = document.getElementById(key+'-min');
+  if (!hrsEl || !minEl) return;
+  const h = Math.max(0, parseInt(hrsEl.value) || 0);
+  let m = Math.max(0, parseInt(minEl.value) || 0);
+  if (m > 59) m = 59;
+  const decimal = Math.round((h + m / 60) * 100) / 100;
+  setDayValue(dateKey(getSelectedDate()), key, decimal);
   renderNumbers(); renderMonthCharts();
 }
 
