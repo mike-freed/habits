@@ -20,6 +20,8 @@
     --sec-reading: #e8f5e9; --sec-reading-text: #2e7d32;
     --sec-supplements: #eceff1; --sec-supplements-text: #546e7a;
     --sec-drinks: #fce4ec; --sec-drinks-text: #c62828;
+    --sec-sleep: #e8eaf6; --sec-sleep-text: #283593;
+    --sec-notes: #fff8e1; --sec-notes-text: #f57f17;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
@@ -75,6 +77,11 @@
   #sec-drinks .section-header { background:var(--sec-drinks); }
   #sec-drinks .section-title { color:var(--sec-drinks-text); }
   #sec-drinks .section-toggle { color:var(--sec-drinks-text); }
+  #sec-sleep .section-header { background:var(--sec-sleep); }
+  #sec-sleep .section-title { color:var(--sec-sleep-text); }
+  #sec-sleep .section-toggle { color:var(--sec-sleep-text); }
+  #sec-notes .section-header { background:var(--sec-notes); }
+  #sec-notes .section-title { color:var(--sec-notes-text); }
 
   /* Card */
   .card { background:#fff; border-radius:0; padding:14px; border-bottom:1px solid var(--card-border); }
@@ -83,7 +90,11 @@
   .card-label { display:flex; align-items:center; gap:8px; }
   .card-label .icon { font-size:20px; }
   .card-label .name { font-size:15px; font-weight:500; color:#1a1a1a; }
-  .card-label .goal-text { font-size:11px; color:var(--text-dim); }
+  .card-label .goal-text { font-size:11px; color:var(--text-dim); cursor:pointer; border-bottom:1px dashed transparent; transition:border-color 0.2s; }
+  .card-label .goal-text:hover { border-bottom-color:var(--text-dim); }
+  .card-label .goal-text:active { color:var(--accent); }
+  .goal-edit-input { width:50px; font-size:11px; border:1px solid var(--accent); border-radius:4px; padding:2px 4px; font-family:inherit; text-align:center; color:#1a1a1a; }
+  .goal-edit-input:focus { outline:none; }
 
   /* Goal progress ring */
   .goal-wrap { display:flex; align-items:center; gap:10px; }
@@ -113,6 +124,12 @@
   .decimal-input { background:#f0f3f6; border:1px solid var(--card-border); color:#1a1a1a; width:60px; height:36px; border-radius:10px; text-align:center; font-size:16px; font-weight:600; font-family:inherit; }
   .decimal-input:focus { outline:2px solid var(--accent); border-color:transparent; }
 
+  /* Sleep sub-row */
+  .sleep-sub-row { display:flex; align-items:center; gap:8px; margin-top:8px; padding-left:28px; }
+  .sleep-sub-label { font-size:13px; color:var(--text-dim); }
+  .sleep-sub-input { background:#f0f3f6; border:1px solid var(--card-border); color:#1a1a1a; width:60px; height:32px; border-radius:8px; text-align:center; font-size:14px; font-weight:600; font-family:inherit; }
+  .sleep-sub-input:focus { outline:2px solid var(--accent); border-color:transparent; }
+
   /* Month dot grid */
   .month-dots { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:10px; padding:0 2px; }
   .month-dots .dot-label { font-size:9px; color:var(--text-dim); text-align:center; font-weight:600; margin-bottom:2px; }
@@ -141,6 +158,11 @@
   .drink-icon { font-size:18px; opacity:0.2; transition:opacity 0.3s; }
   .drink-icon.active { opacity:1; }
 
+  /* Notes */
+  .notes-area { width:100%; min-height:80px; padding:10px 12px; border:1px solid var(--card-border); border-radius:10px; background:#fff; font-family:inherit; font-size:14px; color:var(--text); resize:vertical; line-height:1.5; }
+  .notes-area:focus { outline:2px solid var(--sec-notes-text); border-color:transparent; }
+  .notes-area::placeholder { color:#bbb; }
+
   /* Summary panel */
   .summary-panel { display:none; }
   .summary-panel.open { display:block; }
@@ -161,20 +183,20 @@
 
 <!-- Date navigation -->
 <div class="date-nav">
-  <button onclick="changeDay(-1)">‹</button>
+  <button onclick="changeDay(-1)">&#8249;</button>
   <div class="date-display">
     <div class="day-name" id="dayName"></div>
     <div class="day-date" id="dayDate"></div>
     <div id="todayBadge"></div>
   </div>
-  <button onclick="changeDay(1)">›</button>
+  <button onclick="changeDay(1)">&#8250;</button>
 </div>
 
 <!-- Location -->
 <div class="location-section">
-  <div class="loc-btn" data-loc="home" onclick="setLocation('home')"><span class="loc-icon">🏠</span>Home</div>
-  <div class="loc-btn" data-loc="work" onclick="setLocation('work')"><span class="loc-icon">✈️</span>Work Travel</div>
-  <div class="loc-btn" data-loc="vacation" onclick="setLocation('vacation')"><span class="loc-icon">🏖️</span>Vacation</div>
+  <div class="loc-btn" data-loc="home" onclick="setLocation('home')"><span class="loc-icon">&#127968;</span>Home</div>
+  <div class="loc-btn" data-loc="work" onclick="setLocation('work')"><span class="loc-icon">&#9992;&#65039;</span>Work Travel</div>
+  <div class="loc-btn" data-loc="vacation" onclick="setLocation('vacation')"><span class="loc-icon">&#127958;&#65039;</span>Vacation</div>
 </div>
 
 <!-- Exercise -->
@@ -186,7 +208,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">💪</span><div><span class="name">Push-ups</span><div class="goal-text">Goal: 50</div></div></div>
+      <div class="card-label"><span class="icon">&#128170;</span><div><span class="name">Push-ups</span><div class="goal-text" id="goal-text-pushups" onclick="editGoal('pushups')">Goal: 50</div></div></div>
       <div class="goal-wrap">
         <div class="goal-ring" id="ring-pushups"></div>
         <div class="num-controls">
@@ -201,7 +223,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🏋️</span><div><span class="name">Pull-ups</span><div class="goal-text">Goal: 10</div></div></div>
+      <div class="card-label"><span class="icon">&#127947;&#65039;</span><div><span class="name">Pull-ups</span><div class="goal-text" id="goal-text-pullups" onclick="editGoal('pullups')">Goal: 10</div></div></div>
       <div class="goal-wrap">
         <div class="goal-ring" id="ring-pullups"></div>
         <div class="num-controls">
@@ -216,7 +238,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🦵</span><div><span class="name">Squats</span><div class="goal-text">Goal: 50</div></div></div>
+      <div class="card-label"><span class="icon">&#129469;</span><div><span class="name">Squats</span><div class="goal-text" id="goal-text-squats" onclick="editGoal('squats')">Goal: 50</div></div></div>
       <div class="goal-wrap">
         <div class="goal-ring" id="ring-squats"></div>
         <div class="num-controls">
@@ -231,7 +253,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🚴</span><span class="name">Peloton Core</span></div>
+      <div class="card-label"><span class="icon">&#128692;</span><span class="name">Peloton Core</span></div>
       <div class="toggle-track" id="toggle-peloton" onclick="toggleBinary('peloton')"><div class="toggle-knob"></div></div>
     </div>
     <div class="summary-panel" id="summary-peloton"><div class="month-dots" id="dots-peloton"></div></div>
@@ -239,7 +261,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🏃</span><div><span class="name">Miles</span><div class="goal-text">Goal: 3.0</div></div></div>
+      <div class="card-label"><span class="icon">&#127939;</span><div><span class="name">Miles</span><div class="goal-text" id="goal-text-miles" onclick="editGoal('miles')">Goal: 3.0</div></div></div>
       <div class="goal-wrap">
         <div class="goal-ring" id="ring-miles"></div>
         <div class="num-controls">
@@ -248,6 +270,31 @@
       </div>
     </div>
     <div class="summary-panel" id="summary-miles"><div class="month-chart-wrap"><canvas id="chart-miles"></canvas></div></div>
+  </div>
+</div>
+
+<!-- Sleep -->
+<div class="section" id="sec-sleep">
+  <div class="section-header">
+    <div class="section-title">Sleep</div>
+    <button class="section-toggle" onclick="toggleSection('sleep')">Monthly</button>
+  </div>
+  <div class="card">
+    <div class="card-row">
+      <div class="card-label"><span class="icon">&#128564;</span><div><span class="name">Hours Slept</span><div class="goal-text" id="goal-text-sleep" onclick="editGoal('sleep')">Goal: 7.0 hrs</div></div></div>
+      <div class="goal-wrap">
+        <div class="goal-ring" id="ring-sleep"></div>
+        <div class="num-controls">
+          <input type="number" class="decimal-input" id="sleep-input" step="0.1" min="0" placeholder="0.0" onchange="setDecimal('sleep',this.value)" onfocus="this.select()">
+        </div>
+      </div>
+    </div>
+    <div class="sleep-sub-row">
+      <span class="sleep-sub-label">Deep sleep:</span>
+      <input type="number" class="sleep-sub-input" id="deepsleep-input" step="0.1" min="0" placeholder="0.0" onchange="setDecimal('deepsleep',this.value)" onfocus="this.select()">
+      <span class="sleep-sub-label">hrs</span>
+    </div>
+    <div class="summary-panel" id="summary-sleep"><div class="month-chart-wrap"><canvas id="chart-sleep"></canvas></div></div>
   </div>
 </div>
 
@@ -260,7 +307,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🧘</span><div><span class="name">Meditation</span><div class="goal-text">Goal: 10 min</div></div></div>
+      <div class="card-label"><span class="icon">&#129496;</span><div><span class="name">Meditation</span><div class="goal-text" id="goal-text-meditation" onclick="editGoal('meditation')">Goal: 10 min</div></div></div>
       <div class="goal-wrap">
         <div class="goal-ring" id="ring-meditation"></div>
         <div class="num-controls">
@@ -275,7 +322,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🤸</span><span class="name">Stretching</span></div>
+      <div class="card-label"><span class="icon">&#129336;</span><span class="name">Stretching</span></div>
       <div class="toggle-track" id="toggle-stretching" onclick="toggleBinary('stretching')"><div class="toggle-knob"></div></div>
     </div>
     <div class="summary-panel" id="summary-stretching"><div class="month-dots" id="dots-stretching"></div></div>
@@ -290,7 +337,7 @@
   </div>
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🐕</span><span class="name">Walked the Dogs</span></div>
+      <div class="card-label"><span class="icon">&#128021;</span><span class="name">Walked the Dogs</span></div>
       <div class="toggle-track" id="toggle-dogs" onclick="toggleBinary('dogs')"><div class="toggle-knob"></div></div>
     </div>
     <div class="summary-panel" id="summary-dogs"><div class="month-dots" id="dots-dogs"></div></div>
@@ -306,7 +353,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">📖</span><div><span class="name">Fiction</span><div class="goal-text">Goal: 20 min</div></div></div>
+      <div class="card-label"><span class="icon">&#128214;</span><div><span class="name">Fiction</span><div class="goal-text" id="goal-text-fiction" onclick="editGoal('fiction')">Goal: 20 min</div></div></div>
       <div class="goal-wrap">
         <div class="goal-ring" id="ring-fiction"></div>
         <div class="num-controls">
@@ -321,7 +368,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">📚</span><div><span class="name">Non-Fiction</span><div class="goal-text">Goal: 20 min</div></div></div>
+      <div class="card-label"><span class="icon">&#128218;</span><div><span class="name">Non-Fiction</span><div class="goal-text" id="goal-text-nonfiction" onclick="editGoal('nonfiction')">Goal: 20 min</div></div></div>
       <div class="goal-wrap">
         <div class="goal-ring" id="ring-nonfiction"></div>
         <div class="num-controls">
@@ -344,7 +391,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">💊</span><span class="name">Multivitamin</span></div>
+      <div class="card-label"><span class="icon">&#128138;</span><span class="name">Multivitamin</span></div>
       <div class="toggle-track" id="toggle-multi" onclick="toggleBinary('multi')"><div class="toggle-knob"></div></div>
     </div>
     <div class="summary-panel" id="summary-multi"><div class="month-dots" id="dots-multi"></div></div>
@@ -352,7 +399,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🥬</span><span class="name">AG1</span></div>
+      <div class="card-label"><span class="icon">&#129452;</span><span class="name">AG1</span></div>
       <div class="toggle-track" id="toggle-ag1" onclick="toggleBinary('ag1')"><div class="toggle-knob"></div></div>
     </div>
     <div class="summary-panel" id="summary-ag1"><div class="month-dots" id="dots-ag1"></div></div>
@@ -360,7 +407,7 @@
 
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🦠</span><span class="name">Probiotic</span></div>
+      <div class="card-label"><span class="icon">&#129440;</span><span class="name">Probiotic</span></div>
       <div class="toggle-track" id="toggle-probiotic" onclick="toggleBinary('probiotic')"><div class="toggle-knob"></div></div>
     </div>
     <div class="summary-panel" id="summary-probiotic"><div class="month-dots" id="dots-probiotic"></div></div>
@@ -375,7 +422,7 @@
   </div>
   <div class="card">
     <div class="card-row">
-      <div class="card-label"><span class="icon">🍺</span><span class="name">Drinks</span></div>
+      <div class="card-label"><span class="icon">&#127866;</span><span class="name">Drinks</span></div>
       <div class="num-controls">
         <div class="num-display" id="drinks-display" onclick="editNum('drinks')">0</div>
         <button class="num-btn" onclick="addNum('drinks',1)">+1</button>
@@ -387,23 +434,52 @@
   </div>
 </div>
 
+<!-- Notes -->
+<div class="section" id="sec-notes">
+  <div class="section-header">
+    <div class="section-title">Notes</div>
+  </div>
+  <div class="card">
+    <textarea class="notes-area" id="notes-input" placeholder="How did the day go? Any notes about how you felt, what you did..." oninput="saveNotes()"></textarea>
+  </div>
+</div>
+
 <div class="footer">Tap Share then "Add to Home Screen" in Safari</div>
 
 <script>
 // ── Config ──
-const NUMS = ['pushups','pullups','squats','miles','fiction','nonfiction','drinks','meditation'];
+const NUMS = ['pushups','pullups','squats','miles','fiction','nonfiction','drinks','meditation','sleep','deepsleep'];
 const BINS = ['peloton','dogs','multi','ag1','probiotic','stretching'];
-const GOALS = {
-  pushups: 50, pullups: 10, squats: 50, miles: 3, fiction: 20, nonfiction: 20, meditation: 10
+const DEFAULT_GOALS = {
+  pushups: 50, pullups: 10, squats: 50, miles: 3, fiction: 20, nonfiction: 20, meditation: 10, sleep: 7
+};
+const GOAL_UNITS = {
+  pushups: '', pullups: '', squats: '', miles: '', fiction: ' min', nonfiction: ' min', meditation: ' min', sleep: ' hrs'
 };
 const CHART_COLORS = {
   pushups:'#e94560', pullups:'#4fc3f7', squats:'#ffb74d', miles:'#00c853',
-  fiction:'#ce93d8', nonfiction:'#fff176', drinks:'#ff8a65', meditation:'#80cbc4'
+  fiction:'#ce93d8', nonfiction:'#fff176', drinks:'#ff8a65', meditation:'#80cbc4',
+  sleep:'#5c6bc0', deepsleep:'#3949ab'
 };
 
 let dayOffset = 0;
 let charts = {};
 let openSections = {};
+
+// ── Goals (persisted in localStorage) ──
+function loadGoals() {
+  try { return JSON.parse(localStorage.getItem('habitGoals')||'{}'); } catch { return {}; }
+}
+function saveGoals(goals) { localStorage.setItem('habitGoals', JSON.stringify(goals)); }
+function getGoal(key) {
+  const custom = loadGoals();
+  return custom[key] !== undefined ? custom[key] : (DEFAULT_GOALS[key] || null);
+}
+function setGoalValue(key, val) {
+  const goals = loadGoals();
+  goals[key] = val;
+  saveGoals(goals);
+}
 
 // ── Date helpers ──
 function getSelectedDate() {
@@ -417,7 +493,6 @@ function getMonthDates(refDate) {
   const first = new Date(year, month, 1);
   const last = new Date(year, month+1, 0);
   const dates = [];
-  // Pad start to Monday
   let startDay = first.getDay(); if (startDay===0) startDay=7;
   for (let i=1; i<startDay; i++) dates.push(null);
   for (let d=1; d<=last.getDate(); d++) dates.push(new Date(year, month, d));
@@ -446,6 +521,54 @@ function renderGoalRing(id, current, goal, color) {
     <div class="ring-text ${met?'met':''}">${current}</div>`;
 }
 
+// ── Render goal text labels ──
+function renderGoalTexts() {
+  Object.keys(DEFAULT_GOALS).forEach(key => {
+    const el = document.getElementById('goal-text-'+key);
+    if (!el) return;
+    const g = getGoal(key);
+    const unit = GOAL_UNITS[key] || '';
+    const isDecimal = (key === 'miles' || key === 'sleep');
+    el.textContent = 'Goal: ' + (isDecimal ? parseFloat(g).toFixed(1) : g) + unit;
+  });
+}
+
+// ── Edit goal on tap ──
+function editGoal(key) {
+  const el = document.getElementById('goal-text-'+key);
+  if (!el || el.querySelector('input')) return;
+  const currentGoal = getGoal(key);
+  const unit = GOAL_UNITS[key] || '';
+  const isDecimal = (key === 'miles' || key === 'sleep');
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'goal-edit-input';
+  input.value = currentGoal;
+  if (isDecimal) input.step = '0.1';
+  input.min = '0.1';
+
+  el.textContent = 'Goal: ';
+  el.appendChild(input);
+  const unitSpan = document.createTextNode(unit);
+  el.appendChild(unitSpan);
+  input.focus();
+  input.select();
+
+  function commit() {
+    let v = parseFloat(input.value);
+    if (!v || v <= 0) v = currentGoal;
+    if (isDecimal) v = Math.round(v * 10) / 10;
+    else v = Math.round(v);
+    setGoalValue(key, v);
+    renderGoalTexts();
+    renderNumbers();
+    renderMonthCharts();
+  }
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
+}
+
 // ── Render date nav ──
 function renderDateNav() {
   const d = getSelectedDate();
@@ -468,17 +591,19 @@ function renderNumbers() {
   NUMS.forEach(key => {
     const val = dd[key]||0;
     const disp = document.getElementById(key+'-display');
-    if (disp) disp.textContent = key==='miles' ? parseFloat(val).toFixed(1) : val;
+    const isDecimal = (key==='miles'||key==='sleep'||key==='deepsleep');
+    if (disp) disp.textContent = isDecimal ? parseFloat(val).toFixed(1) : val;
     const inp = document.getElementById(key+'-input');
     if (inp) inp.value = val||'';
     // Goal ring
-    if (GOALS[key]) renderGoalRing('ring-'+key, parseFloat(val), GOALS[key], CHART_COLORS[key]||'#4fc3f7');
+    const goal = getGoal(key);
+    if (goal) renderGoalRing('ring-'+key, parseFloat(val), goal, CHART_COLORS[key]||'#4fc3f7');
   });
   // Drinks icons
   const dc = dd.drinks||0;
   const container = document.getElementById('drinks-icons');
   if (container) {
-    let h=''; for(let i=0;i<Math.max(8,dc);i++) h+=`<span class="drink-icon ${i<dc?'active':''}">🍺</span>`;
+    let h=''; for(let i=0;i<Math.max(8,dc);i++) h+=`<span class="drink-icon ${i<dc?'active':''}">&#127866;</span>`;
     container.innerHTML=h;
   }
 }
@@ -490,6 +615,19 @@ function renderBinaries() {
     const track = document.getElementById('toggle-'+key);
     if (track) track.classList.toggle('on', !!dd[key]);
   });
+}
+
+function renderNotes() {
+  const dk = dateKey(getSelectedDate());
+  const dd = getDayData(dk);
+  const textarea = document.getElementById('notes-input');
+  if (textarea) textarea.value = dd.notes || '';
+}
+
+function saveNotes() {
+  const dk = dateKey(getSelectedDate());
+  const textarea = document.getElementById('notes-input');
+  if (textarea) setDayValue(dk, 'notes', textarea.value);
 }
 
 function renderMonthDots() {
@@ -519,7 +657,6 @@ function renderMonthDots() {
       if (isTod) cls += ' today';
       html += `<div class="${cls}"></div>`;
     });
-    // Add legend
     html += '<div style="grid-column:1/-1"><div class="chart-legend">';
     html += '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--green)"></div>Home</div>';
     html += '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:#0097a7"></div>Travel</div>';
@@ -540,7 +677,7 @@ function renderMonthCharts() {
   const data = loadData();
   const today = new Date(); today.setHours(0,0,0,0);
 
-  const chartKeys = NUMS;
+  const chartKeys = NUMS.filter(k => k !== 'deepsleep');
   chartKeys.forEach(key => {
     const canvas = document.getElementById('chart-'+key);
     if (!canvas) return;
@@ -562,9 +699,9 @@ function renderMonthCharts() {
     }
 
     if (charts[key]) charts[key].destroy();
-    const goalLine = GOALS[key] ? Array(labels.length).fill(GOALS[key]) : null;
+    const goal = getGoal(key);
+    const goalLine = goal ? Array(labels.length).fill(goal) : null;
 
-    // Build background color bands for travel/vacation
     const bgPlugin = {
       id: 'locBands',
       beforeDraw(chart) {
@@ -595,6 +732,29 @@ function renderMonthCharts() {
       pointBorderColor: pointBorders,
       borderWidth: 2,
     }];
+
+    // For sleep chart, also show deep sleep as a second line
+    if (key === 'sleep') {
+      const deepValues = [];
+      for (let d=1; d<=daysInMonth; d++) {
+        const dt = new Date(year, month, d);
+        if (dt > today) break;
+        const dd = data[dateKey(dt)]||{};
+        deepValues.push(parseFloat(dd.deepsleep||0));
+      }
+      datasets.push({
+        data: deepValues,
+        borderColor: CHART_COLORS.deepsleep,
+        backgroundColor: CHART_COLORS.deepsleep + '15',
+        fill: true, tension: 0.3,
+        pointRadius: 3, pointBorderWidth: 1,
+        pointBackgroundColor: CHART_COLORS.deepsleep,
+        pointBorderColor: CHART_COLORS.deepsleep,
+        borderWidth: 1.5,
+        borderDash: [3,3],
+      });
+    }
+
     if (goalLine) {
       datasets.push({
         data: goalLine, borderColor: 'rgba(0,0,0,0.15)',
@@ -620,8 +780,8 @@ function renderMonthCharts() {
 }
 
 function renderAll() {
-  renderDateNav(); renderLocation(); renderNumbers(); renderBinaries();
-  renderMonthDots(); renderMonthCharts();
+  renderDateNav(); renderLocation(); renderGoalTexts(); renderNumbers(); renderBinaries();
+  renderNotes(); renderMonthDots(); renderMonthCharts();
 }
 
 // ── Actions ──
@@ -630,7 +790,8 @@ function setLocation(loc) { setDayValue(dateKey(getSelectedDate()),'location',lo
 function addNum(key, amt) {
   const dk=dateKey(getSelectedDate()); const dd=getDayData(dk);
   let v=parseFloat(dd[key]||0)+amt; if(v<0)v=0;
-  if(key==='miles') v=Math.round(v*10)/10;
+  const isDecimal = (key==='miles'||key==='sleep'||key==='deepsleep');
+  if(isDecimal) v=Math.round(v*10)/10;
   setDayValue(dk,key,v); renderNumbers(); renderMonthCharts();
 }
 
@@ -638,7 +799,7 @@ function editNum(key) {
   const disp = document.getElementById(key+'-display');
   if (!disp || disp.querySelector('input')) return;
   const currentVal = disp.textContent;
-  const isDecimal = key === 'miles';
+  const isDecimal = (key==='miles'||key==='sleep'||key==='deepsleep');
   const input = document.createElement('input');
   input.type = 'number';
   input.className = 'num-edit-input';
@@ -695,14 +856,16 @@ function toggleSection(name) {
 function exportCSV() {
   const data=loadData(); const allDates=Object.keys(data).sort();
   if(!allDates.length){alert('No data to export yet!');return;}
-  const h=['Date','Location','Push-ups','Pull-ups','Squats','Peloton Core','Miles','Dogs','Fiction (min)','Non-Fiction (min)','Multivitamin','AG1','Probiotic','Drinks','Meditation (min)','Stretching'];
+  const h=['Date','Location','Push-ups','Pull-ups','Squats','Peloton Core','Miles','Dogs','Fiction (min)','Non-Fiction (min)','Multivitamin','AG1','Probiotic','Drinks','Meditation (min)','Stretching','Sleep (hrs)','Deep Sleep (hrs)','Notes'];
   const rows=[h.join(',')];
   allDates.forEach(dk => {
     const d=data[dk];
+    const notes = (d.notes||'').replace(/"/g,'""');
     rows.push([dk, d.location||'home', d.pushups||0, d.pullups||0, d.squats||0,
       d.peloton?'Yes':'No', d.miles||0, d.dogs?'Yes':'No', d.fiction||0, d.nonfiction||0,
       d.multi?'Yes':'No', d.ag1?'Yes':'No', d.probiotic?'Yes':'No', d.drinks||0,
-      d.meditation||0, d.stretching?'Yes':'No'].join(','));
+      d.meditation||0, d.stretching?'Yes':'No', d.sleep||0, d.deepsleep||0,
+      '"'+notes+'"'].join(','));
   });
   const blob=new Blob([rows.join('\n')],{type:'text/csv'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
